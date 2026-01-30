@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>牛油果菜谱管家 v6.1</title>
+    <style>
+        :root {
+            --primary-color: #789262;
+            /* 牛油果绿 */
+            --bg-color: #f9fbf7;
+            /* 奶油白背景 */
+            --card-bg: #ffffff;
+            --text-main: #3a4035;
+            --text-light: #8a9184;
+            --danger-color: #e88d8d;
+            /* 柔和粉红 */
+        }
+
+        body {
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background-color: #eef2eb;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            color: var(--text-main);
+        }
+
+        #app {
+            width: 100%;
+            max-width: 500px;
+            background: var(--bg-color);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            padding: 25px 25px 15px;
+            font-size: 22px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-color);
+        }
+
+        .content {
+            flex: 1;
+            padding: 10px 20px;
+            overflow-y: auto;
+            padding-bottom: 160px;
+            scroll-behavior: smooth;
+        }
+
+        /* 卡片设计 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(120, 146, 98, 0.06);
+            border: 1px solid rgba(120, 146, 98, 0.05);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ing-card {
+            justify-content: space-between;
+        }
+
+        .ing-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ing-name {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .ing-count {
+            background: #f0f4eb;
+            color: var(--primary-color);
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .custom-cb {
+            width: 26px;
+            height: 26px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50%;
+            cursor: pointer;
+            appearance: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .custom-cb:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .custom-cb:checked::after {
+            content: "✓";
+            color: white;
+            font-size: 14px;
+        }
+
+        .recipe-card {
+            justify-content: space-between;
+        }
+
+        .recipe-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .del-btn {
+            color: var(--danger-color);
+            font-size: 20px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .del-btn:hover {
+            opacity: 0.7;
+        }
+
+        /* 底部导航与操作 */
+        .fab-container {
+            position: absolute;
+            bottom: 90px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .fab-main {
+            width: 60px;
+            height: 60px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            box-shadow: 0 6px 20px rgba(120, 146, 98, 0.35);
+            cursor: pointer;
+            pointer-events: auto;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .fab-main:active {
+            transform: scale(0.9);
+            background: #657d51;
+        }
+
+        .side-btn {
+            position: absolute;
+            pointer-events: auto;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .side-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .clear-btn {
+            left: 30px;
+            color: var(--danger-color);
+        }
+
+        .confirm-btn {
+            right: 30px;
+            color: var(--primary-color);
+        }
+
+        .nav-bar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+            background: white;
+            display: flex;
+            border-top: 1px solid #f2f2f2;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        .nav-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            margin-top: 6px;
+            visibility: hidden;
+        }
+
+        .nav-item.active .nav-dot {
+            visibility: visible;
+        }
+
+        /* 弹窗设计 */
+        .modal-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(30, 35, 25, 0.4);
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 28px;
+            padding: 32px;
+            width: 82%;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalPop {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid #f0f2ef;
+            border-radius: 14px;
+            background: #f9fbf9;
+            box-sizing: border-box;
+            outline: none;
+            font-size: 16px;
+            color: var(--text-main);
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            background: white;
+        }
+
+        .modal-action {
+            margin-top: 24px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            border-radius: 14px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .empty-state {
+            text-align: center;
+            margin-top: 100px;
+            color: var(--text-light);
+        }
+
+        .empty-icon {
+            font-size: 56px;
+            margin-bottom: 12px;
+            display: block;
+            filter: grayscale(1);
+            opacity: 0.25;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app">
+        <div class="header">
+            <span id="page-title">新鲜食材</span>
+            <span style="font-size: 16px;">🥑</span>
+        </div>
+
+        <div id="ingredient-page" class="content">
+            <div id="ingredient-list"></div>
+            <div id="ing-empty" class="empty-state" style="display:none;">
+                <span class="empty-icon">🍳</span>
+                <p>冰箱空空的，去买点菜吧</p>
+            </div>
+        </div>
+
+        <div id="menu-page" class="content" style="display:none;">
+            <div id="menu-display"></div>
+        </div>
+
+        <div class="fab-container">
+            <div id="left-action" class="side-btn clear-btn" onclick="handleClearAll()">清空</div>
+            <div class="fab-main" onclick="handleFabClick()">+</div>
+            <div id="right-action" class="side-btn confirm-btn" onclick="handleQuickProduce()">确认</div>
+        </div>
+
+        <div class="nav-bar">
+            <div id="nav-ing" class="nav-item active" onclick="switchTab('ing')">
+                <span>食材库</span>
+                <div class="nav-dot"></div>
+            </div>
+            <div id="nav-menu" class="nav-item" onclick="switchTab('menu')">
+                <span>建议菜单</span>
+                <div class="nav-dot"></div>
+            </div>
+        </div>
+
+        <div id="modal-box" class="modal-overlay" onclick="closeOnOverlay(event)">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div id="modal-content-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ingredients = JSON.parse(localStorage.getItem('fridge_v6')) || [];
+        let recipes = JSON.parse(localStorage.getItem('recipes_v6')) || [];
+        let currentTags = [];
+        let activeTab = 'ing';
+
+        function renderIngList() {
+            const list = document.getElementById('ingredient-list');
+            const empty = document.getElementById('ing-empty');
+            ingredients = ingredients.filter(i => i.count > 0);
+            list.innerHTML = '';
+
+            if (ingredients.length === 0) {
+                empty.style.display = 'block';
+            } else {
+                empty.style.display = 'none';
+                ingredients.forEach((item, index) => {
+                    list.innerHTML += `
+                    <div class="card ing-card">
+                        <div class="ing-info">
+                            <span class="ing-name">${item.name}</span>
+                            <span class="ing-count">${item.count}</span>
+                        </div>
+                        <input type="checkbox" class="custom-cb" value="${index}">
+                    </div>`;
+                });
+            }
+            localStorage.setItem('fridge_v6', JSON.stringify(ingredients));
+        }
+
+        function handleFabClick() {
+            showModal(activeTab === 'ing' ? 'add-ing' : 'add-recipe');
+        }
+
+        function showModal(type) {
+            const body = document.getElementById('modal-content-body');
+            if (type === 'add-ing') {
+                body.innerHTML = `
+                <h3 style="margin:0 0 20px 0; text-align:center;">新食材入库</h3>
+                <input type="text" id="new-name" placeholder="比如：西红柿" autofocus>
+                <div style="display:flex; justify-content:center; align-items:center; gap:25px; margin:25px 0;">
+                    <button onclick="changeNum(-1)" style="width:44px;height:44px;border-radius:50%;border:1px solid #eee;background:white;font-size:20px;">-</button>
+                    <span id="modal-num" style="font-size:22px; font-weight:bold; min-width:30px; text-align:center;">1</span>
+                    <button onclick="changeNum(1)" style="width:44px;height:44px;border-radius:50%;border:1px solid #eee;background:white;font-size:20px;">+</button>
+                </div>
+                <button class="modal-action" onclick="saveIng()">存入冰箱</button>
+            `;
+            } else {
+                body.innerHTML = `
+                <h3 style="margin:0 0 10px 0; text-align:center;">这组食材怎么做？</h3>
+                <p style="font-size:13px; color:var(--text-light); text-align:center; margin-bottom:18px;">${currentTags.join(' + ') || '（未选食材）'}</p>
+                <input type="text" id="new-recipe" placeholder="菜名，如：西红柿炒蛋" autofocus>
+                <button class="modal-action" onclick="saveRecipe()">保存菜谱</button>
+            `;
+            }
+            document.getElementById('modal-box').style.display = 'flex';
+        }
+
+        // 修复点击遮罩关闭的功能
+        function closeOnOverlay(e) {
+            if (e.target.id === 'modal-box') {
+                closeModals();
+            }
+        }
+
+        function closeModals() {
+            document.getElementById('modal-box').style.display = 'none';
+        }
+
+        function saveIng() {
+            const name = document.getElementById('new-name').value.trim();
+            const count = parseInt(document.getElementById('modal-num').innerText);
+            if (!name) return;
+            const existing = ingredients.find(i => i.name === name);
+            if (existing) { existing.count += count; } else { ingredients.push({ name, count }); }
+            renderIngList();
+            closeModals();
+        }
+
+        function saveRecipe() {
+            const name = document.getElementById('new-recipe').value.trim();
+            if (!name || currentTags.length === 0) return;
+            recipes.push({ name, tags: currentTags.join(',') });
+            localStorage.setItem('recipes_v6', JSON.stringify(recipes));
+            matchAndShowMenu();
+            closeModals();
+        }
+
+        function handleQuickProduce() {
+            const checked = Array.from(document.querySelectorAll('.custom-cb:checked'));
+            if (checked.length === 0) return alert("请先勾选要用的食材");
+            currentTags = checked.map(el => {
+                const idx = el.value;
+                ingredients[idx].count--;
+                return ingredients[idx].name;
+            }).sort();
+            renderIngList();
+            matchAndShowMenu();
+            switchTab('menu');
+        }
+
+        function matchAndShowMenu() {
+            const display = document.getElementById('menu-display');
+            const matches = recipes.filter(r => r.tags === currentTags.join(','));
+            display.innerHTML = matches.length > 0 ? `<p style="text-align:center; color:var(--text-light); font-size:13px; margin: 10px 0 20px;">匹配到以下美味</p>` : '';
+
+            if (matches.length > 0) {
+                matches.forEach(m => {
+                    display.innerHTML += `
+                    <div class="card recipe-card">
+                        <span class="recipe-title">${m.name}</span>
+                        <span class="del-btn" onclick="deleteRecipe(${recipes.indexOf(m)})">🗑️</span>
+                    </div>`;
+                });
+            } else {
+                display.innerHTML = `<div class="empty-state" style="margin-top:50px"><span class="empty-icon">💡</span><p>这个组合还没做过菜，点击 + 记录一下</p></div>`;
+            }
+        }
+
+        function deleteRecipe(idx) {
+            if (confirm("确定删除这个菜谱记忆吗？")) {
+                recipes.splice(idx, 1);
+                localStorage.setItem('recipes_v6', JSON.stringify(recipes));
+                matchAndShowMenu();
+            }
+        }
+
+        function handleClearAll() {
+            if (ingredients.length > 0 && confirm("要清空冰箱里所有食材吗？")) {
+                ingredients = [];
+                renderIngList();
+            }
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            document.getElementById('ingredient-page').style.display = tab === 'ing' ? 'block' : 'none';
+            document.getElementById('menu-page').style.display = tab === 'menu' ? 'block' : 'none';
+            document.getElementById('nav-ing').classList.toggle('active', tab === 'ing');
+            document.getElementById('nav-menu').classList.toggle('active', tab === 'menu');
+            document.getElementById('page-title').innerText = tab === 'ing' ? '新鲜食材' : '美味建议';
+
+            document.getElementById('left-action').style.display = tab === 'ing' ? 'block' : 'none';
+            document.getElementById('right-action').style.display = tab === 'ing' ? 'block' : 'none';
+        }
+
+        function changeNum(val) {
+            const el = document.getElementById('modal-num');
+            let n = parseInt(el.innerText) + val;
+            if (n >= 1) el.innerText = n;
+        }
+
+        renderIngList();
+    </script>
+</body>
+
+</html>
